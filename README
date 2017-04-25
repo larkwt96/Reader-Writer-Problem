@@ -24,3 +24,9 @@ A few comments:
   easier to demonstrate exactly where the threads are writing too. Also, I'm
   not sure if the file I/O libraries or operating system do any concurrency of
   their own. With shared memory, there is none.
+
+The Makefile:
+make [all]      : Creates executable, soln
+make test       : Creates debug executable, dsoln
+make pkg        : Creates a tar with files for submission
+make clean      : Cleans
