@@ -1,4 +1,4 @@
-CXXFLAGS = -Wall -std=c11
+CXXFLAGS = -Wall -pthread #-std=c11
 EXTRAFLAGS = -Wextra -g
 SOURCES = soln.c
 EXE = soln

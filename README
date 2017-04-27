@@ -1,7 +1,8 @@
+### First Reader-Writer Problem ###
 This is a solution to the first reader-writer problem implemented in C with
 mutex locks, semaphores, and shared memory representing the file.
 
-Assumptions and problem definitions:
+## Assumptions and problem definitions ##
 * Readers and writers need to access a file which will be represented by shared
   memory.
 * The "file" will be referred to as "the space" or "the file".
@@ -10,13 +11,13 @@ Assumptions and problem definitions:
 * Since readers don't modify the data, multiple readers may access the space at
   one time.
 
-Implications:
+## Implications ##
 * A writer that never stops writing will starve the readers.
 * If a reader is reading and another reader enters, it will begin reading
   regardless of whether a writer is waiting. This results in starvation of
   writers.
 
-A few comments:
+## A few comments ##
 * Since shared memory (and files) are available to all processes, this could be
   implemented with interprocess communication, but since multi-threading is
   easier, I am using threads instead.
@@ -24,8 +25,78 @@ A few comments:
   easier to demonstrate exactly where the threads are writing too. Also, I'm
   not sure if the file I/O libraries or operating system do any concurrency of
   their own. With shared memory, there is none.
+* To describe what's going on, I've added print statements to print to stdout.
+  These aren't synchronized, so some concurrency issues will occure there, but
+  it doesn't affect or reflect any issues in the reader writer solution.
 
-The Makefile:
+## The Solution ##
+Code:
+mutex rw    # lock for both readers and writers
+mutex r     # lock for readers
+mutex w     # lock for writers
+int rc=0    # number of readers reading
+writer() {
+    * Only 1 writer at a time, so all but one writer will get past this point.
+    lock(w)
+
+    * The writer that makes it locks the rw lock. If it is already locked,
+      writer will block. The only person that can unlock it is the writer. When
+      the reader unlocks, the writer can continue with its lock and begin
+      writing.
+    lock(rw)
+
+    <write>
+
+    * When it's finished writing, it unlocks the space. This allows other
+      readers or writers to access the space.
+    unlock(rw)
+
+    * This unlocks the writers structure. Now a writer can get in to request to
+      write. Since the rw was unlocked first, the reader blocked on this lock
+      will begin reading, locking rw again before the next writer can lock it
+      (unless it's really fast).
+    unlock(w)
+}
+reader() {
+    * The r lock is used only by readers and controls access to rc.
+    lock(r)
+
+    * Increment the reader count and check if it was set to 0. If it was, then
+      the reader accessing the space is the first to enter. If this is the
+      case, it must lock the rw lock. If a writer is currently writing, this
+      space will be locked so the reader will block. When the writer finishes,
+      the reader can continue.
+    if (rc++==0)
+        lock(rw)
+
+    * Once it does, it will unlock r. The next reader is then allowed to enter.
+      It will increment rc but won't lock rw again. Therefore it wont block.
+    unlock(r)
+
+    <read>
+
+    * Lock r to modify rc. If it's locked, it's because a reader is entering or
+      leaving this section. If a reader is entering, rc will be at least 1
+      since the entering reader will increment rc. If a reader is leaving, rc
+      will initially be at least 2 since 2 readers are accessing the space.
+      After it leaves, rc will be at least 1. Either case will result in rc>=1.
+    lock(r)
+
+    * rc is at least 1, so this will never result in rc being negative. If no
+      other readers are in the share, then rc is 1. After a decrement it will
+      be 0. The if statement will be true and rw will be unlocked. In this
+      case, a writer waiting on this lock will proceed.
+    if (--rc==0)
+        unlock(rw)
+
+    * rc is unlocked. This allows a reader to enter. If a writer started since
+      the last reader was the final in the space, the entering reader will
+      block on the lock of rw. That means the reader won't enter the space
+      being written to.
+    unlock(r)
+}
+
+## The Makefile ##
 make [all]      : Creates executable, soln
 make test       : Creates debug executable, dsoln
 make pkg        : Creates a tar with files for submission
