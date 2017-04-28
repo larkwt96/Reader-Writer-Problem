@@ -31,8 +31,6 @@
  */
 #define READER 1
 #define WRITER 2
-/* CONFIGURABLE: Comment or uncomment */
-//#define THREAD_VERBOSE // if defined, it will log when threads start/end
 pthread_t start_thread(unsigned type);
 
 /* The locks used by the solution. See functions reader and writer. */
@@ -54,9 +52,8 @@ void *writer(void*);        // the writer thread routine
  * later, were this to be turned into a library.
  */
 char *filename; // the file for the readers/writers to read/write to
-#define HASH_SIZE 1000      // used to calculate hash of file
+#define HASH_SIZE 1000      // size of hash module
 void read_file(int id);     // function to define how the reader reads
-/* CONFIGURABLE: The writers write this many random bytes to the file */
 #define MAX_WRITE_SIZE 1024 // the write_file writes this many random chars
 void write_file(int id);    // function to define how the writer writes
 
@@ -90,9 +87,7 @@ pthread_t start_thread(unsigned type) {
 
 void *reader(void *arg) {
     int id = *((int*)arg);
-#ifdef THREAD_VERBOSE
     printf("[reader: %d] Thread started.\n", id);
-#endif
 
     /* IMPLEMENTATION
      * Readers lock r, so all but one gets through, and the rest block. For the
@@ -139,18 +134,14 @@ void *reader(void *arg) {
     if (--rc==0) pthread_mutex_unlock(&rw);
     pthread_mutex_unlock(&r);
 
-#ifdef THREAD_VERBOSE
     printf("[reader: %d] Thread exiting.\n", id);
-#endif
     free(arg);
     pthread_exit(NULL);
 }
 
 void *writer(void *arg) {
     int id = *((int*)arg);
-#ifdef THREAD_VERBOSE
     printf("[writer: %d] Thread started.\n", id);
-#endif
 
     /* Implementation */
     /*
@@ -167,9 +158,7 @@ void *writer(void *arg) {
      */
     pthread_mutex_unlock(&rw);
 
-#ifdef THREAD_VERBOSE
     printf("[writer: %d] Thread exiting.\n", id);
-#endif
     free(arg);
     pthread_exit(NULL);
 }
@@ -236,13 +225,6 @@ void write_file(int id) {
 
 //******************************************************************************
 /* TEST FUNCTIONS */
-// These functions simulate some scenario. They should all start threads and join each of them.
-// The reason for joining is because the filename is passed as an argument to
-// the executable and therefore lives on the main stack. If the main thread
-// ends, that might get overwritten (but I'm not sure.)
-/*
- * Simple demonstration of starting and joining the reader and writer thread.
- */
 void simple_test() {
     printf("Starting reader thread...\n");
     pthread_t rtid = start_thread(READER);
@@ -261,47 +243,36 @@ void simple_test() {
     printf("Joined writer thread.\n");
 }
 
-/*
- * This will start r readers and w writers. It will start all writers and then
- * start all readers.
- */
 void startrw(unsigned r, unsigned w) {
     pthread_t threads[r+w];
-    printf("Starting %u writers.\n", w);
-    for (unsigned i = 0; i < w; i++) threads[r+i] = start_thread(WRITER);
     printf("Starting %u readers.\n", r);
     for (unsigned i = 0; i < r; i++) threads[i] = start_thread(READER);
+    printf("Starting %u writers.\n", w);
+    for (unsigned i = 0; i < w; i++) threads[r+i] = start_thread(WRITER);
     for (unsigned i = 0; i < r+w; i++) pthread_join(threads[i], NULL);
     printf("All readers and writers' threads are done executing.\n");
 }
 
-/*
- * This will start x readers and x writers. It will alternate between starting
- * writer and reader threads starting with the writer first.
- */
 void startx(unsigned x) {
     pthread_t threads[x*2];
     printf("Starting %u readers and writers total.\n", x*2);
     for (unsigned i = 0; i < x; i++) {
-        threads[i*2+1] = start_thread(WRITER);
         threads[i*2] = start_thread(READER);
+        threads[i*2+1] = start_thread(WRITER);
     }
     for (unsigned i = 0; i < x*2; i++) pthread_join(threads[i], NULL);
     printf("All readers and writers' threads are done executing.\n");
 }
 
-/*
- * This will demonstrate the starving of writers.
- */
 void starve_writer() {
     printf("Starting 10 readers.\n");
-    pthread_t threads[100];
+    pthread_t threads[1001];
     for (int i = 0; i < 10; i++) threads[i] = start_thread(READER);
     printf("Starting writer.\n");
     threads[10] = start_thread(WRITER);
     printf("Starting remaining readers.\n");
-    for (int i = 11; i < 100; i++) threads[i] = start_thread(READER);
-    for (unsigned i = 0; i < 100; i++) pthread_join(threads[i], NULL);
+    for (int i = 11; i < 1001; i++) threads[i] = start_thread(READER);
+    for (unsigned i = 0; i < 1001; i++) pthread_join(threads[i], NULL);
 }
 
 //******************************************************************************
@@ -325,7 +296,5 @@ int main(int argc, char *argv[]) {
     }
 
     /* Start implementation, call test function */
-    /* CONFIGURABLE: Call any of the test functions above here  */
-    startx(10);         // start 10 readers/writers
-    //starve_writer();    // prove that writer can be starved
+    startrw(1000, 100);
 }
