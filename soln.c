@@ -1,8 +1,13 @@
+// Author: Lucas Wilson
+// Email: lkwilson96@gmail.com
+// Created for CS370 Honors Assignment
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
+#include <time.h>
 #include <errno.h>
-#include <error.h>
+//#include <error.h> // commented for Mac OS X support
 #include <sys/types.h>
 #include <sys/ipc.h>
 #include <sys/shm.h>
@@ -15,35 +20,37 @@
  * will be printed.
  */
 
-/* Shared memory global definitions */
+/* Shared memory definitions */
 #define SHM_SIZE 1024000
-int shmid; // file descriptor
+int shmid; // file descriptor (actually shared memory)
 void *shm; // shared memory pointer
 
-// Function definitions
-#define READER 1 // start_thread(READER) is clearer thatn start_tread(1)
+/* Reader writer definitions */
+#define READER 1
 #define WRITER 2
-void *reader(void*); // the reader thread
-void read_file(); // unsynchronized read funciton, used by reader
-void *writer(void*); // the writer thread
-void write_file(); // unsyncrhonized write funciton
-// starts a reader/writer thread and returns the thread id
-pthread_t start_thread(unsigned type);
-pthread_mutex_t r;
-pthread_mutex_t rw;
-pthread_mutex_t w;
-int rc = 0; // count for readers
+pthread_t start_thread(unsigned type); // type specifies reader/writer
+pthread_mutex_t rw; // the writers lock
+pthread_mutex_t r; // the rc lock
+int rc = 0; // count for readers, initially none
+void *reader(void*); // the reader thread routine
+void read_file(int id); // function to define how the reader reads
+void *writer(void*); // the writer thread routine
+void write_file(int id); // function to define how the writer writes
 
-/**
- * Terminates program and closes resources. Exits with exit code of val unless
- * an error occurs during the resource closure process, in which case the exit
- * code will be 1 instead of val.
- */
-void end(int val);
+/* Used to start and end the demonstration */
+// Called after everything is initialized. Implementation for start() is at the bottom after the test functions.
 void start();
+// Deallocates shared mem regions, etc. Exit code specified by val, but if an
+// error occurs during deallocation, val is overwritten by new error code.
+void end(int val);
 
-/* Begin demonstration */
+/* Initialize components */
 int main() {
+    // rand() used by write_file
+    srand(time(NULL));
+    // Buffers make the output stream of multithreading inaccurate.
+    setbuf(stdout, NULL);
+
     /* Create and attach to shared memory */
     shmid = shmget(IPC_PRIVATE, SHM_SIZE, S_IRUSR|S_IWUSR);
     if (shmid == -1) {
@@ -54,32 +61,27 @@ int main() {
     if (shm == (void*)-1) {
         perror("Unable to attach to shared memory");
         end(1);
-    }
-    // POST: shmid and shm are set and valid
-    /* Start Implementation */
+    } // ELSE: shmid and shm are set and valid
+
+    /* Start implementation */
     start();
-    /* Detach from shared memory */
-    if (shmdt(shm) == -1) {
-        perror("Unable to detach from shared memory");
-        end(1);
-    }
-    /* Clean exit :) */
-    end(0);
+    end(0); // clean exit :)
 }
 
 void end(int val) {
+    /* Detach from shared memory */
+    if (shmdt(shm) == -1) {
+        perror("Unable to detach from shared memory");
+        val = 1;
+    }
     /* Delete shared memory */
     if (shmctl(shmid, IPC_RMID, NULL) == -1) {
         perror("Unable to delete shared memory");
         val = 1;
     }
-    /* Exit */
     exit(val);
 }
 
-void read_file() {
-
-}
 void *reader(void *arg) {
     int id = *((int*)arg);
     printf("[reader: %d] Started.\n", id);
@@ -88,7 +90,7 @@ void *reader(void *arg) {
     pthread_mutex_lock(&r);
     if (rc++==0) pthread_mutex_lock(&rw);
     pthread_mutex_unlock(&r);
-    read_file();
+    read_file(id);
     pthread_mutex_lock(&r);
     if (--rc==0) pthread_mutex_unlock(&rw);
     pthread_mutex_unlock(&r);
@@ -97,25 +99,37 @@ void *reader(void *arg) {
     free(arg);
     pthread_exit(NULL);
 }
-void write_file() {
 
+void read_file(int id) {
+    printf("[reader: %d] Started reading.\n", id);
+    int hash = 0; // calculate hash of memory
+    for (unsigned long pos = 0; pos < SHM_SIZE; pos++)
+        hash += *((char*)(shm+pos));
+    printf("[reader: %d] Reader hash: %d.\n", id, hash);
+    printf("[reader: %d] Done reading.\n", id);
 }
+
 void *writer(void *arg) {
     int id = *((int*)arg);
     printf("[writer: %d] Started.\n", id);
 
     /* Implementation */
-    pthread_mutex_lock(&w);
     pthread_mutex_lock(&rw);
-    write_file();
+    write_file(id);
     pthread_mutex_unlock(&rw);
-    pthread_mutex_unlock(&w);
-
 
     printf("[writer: %d] Ending.\n", id);
     free(arg);
     pthread_exit(NULL);
 }
+
+void write_file(int id) {
+    printf("[writer: %d] Started writing.\n", id);
+    for (unsigned long pos = 0; pos < SHM_SIZE; pos++)
+        *((char*)(shm+pos)) = rand();
+    printf("[writer: %d] Done writing.\n", id);
+}
+
 
 pthread_t start_thread(unsigned type) {
     // counts readers/writers and assigns them a more readable id than tid
@@ -192,5 +206,6 @@ void starve_writer() {
  * that function from here.
  */
 void start() {
-    starve_writer();
+    //starve_writer();
+    x_of_each(10);
 }
