@@ -198,8 +198,7 @@ void read_file(int id) {
         perror("Unable to close the file opened by reader");
         exit(1);
     }
-    printf("[reader: %d] Read file with hash: %d\n", id, hash);
-    printf("[reader: %d] Done reading.\n", id);
+    printf("[reader: %d] Finished reading file with hash: %d\n", id, hash);
 }
 
 void write_file(int id) {
@@ -326,6 +325,6 @@ int main(int argc, char *argv[]) {
 
     /* Start implementation, call test function */
     /* CONFIGURABLE: Call any of the test functions above here  */
-    startx(10);         // start 10 readers/writers
-    //starve_writer();    // prove that writer can be starved
+    //startx(10);         // start 10 readers/writers
+    starve_writer();    // prove that writer can be starved
 }
