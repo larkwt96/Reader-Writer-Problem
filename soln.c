@@ -310,6 +310,9 @@ int main(int argc, char *argv[]) {
     srand(time(NULL));
     // Buffers make the output stream of multithreading inaccurate.
     setbuf(stdout, NULL);
+    // Initialize the mutex locks.
+    pthread_mutex_init(&r, NULL);
+    pthread_mutex_init(&rw, NULL);
 
     /* Check args */
     if (argc != 2) { // Incorrect number of arguments
