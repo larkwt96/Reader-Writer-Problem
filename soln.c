@@ -1,5 +1,4 @@
-// Author: Lucas Wilson
-// Email: lkwilson96@gmail.com
+// Author: Lucas Wilson // Email: lkwilson96@gmail.com
 // Created for CS370 Honors Assignment
 /**
  * This program provides a solution to the first reader-writer problem and will
@@ -328,6 +327,6 @@ int main(int argc, char *argv[]) {
 
     /* Start implementation, call test function */
     /* CONFIGURABLE: Call any of the test functions above here  */
-    //startx(10);         // start 10 readers/writers
+    startx(10);         // start 10 readers/writers
     starve_writer();    // prove that writer can be starved
 }
