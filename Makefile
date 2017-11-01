@@ -4,6 +4,7 @@ SOURCES = soln.c
 EXE = soln
 TEST = dsoln
 PKG_NAME = Wilson_Lucas-Reader_Writer_Soln.tar
+TEST_FILE = test_file
 
 # Other variables, don't change
 PKG_FILES = $(SOURCES) Makefile README
@@ -12,9 +13,12 @@ PKG_FILES = $(SOURCES) Makefile README
 all: $(EXE)
 
 # Executable
-$(EXE): $(SOURCES)
+$(EXE): $(SOURCES) $(TEST_FILE)
 	@echo "Creating $(EXE)"
 	gcc $(CXXFLAGS) -o $(EXE) $(SOURCES)
+
+$(TEST_FILE):
+	echo -n > $(TEST_FILE)
 
 # Test
 test: CXXFLAGS += $(EXTRAFLAGS)
@@ -35,4 +39,4 @@ $(PKG_NAME): $(PKG_FILES)
 .PHONY: clean
 clean:
 	@echo "Cleaning"
-	rm -rf *.o $(TEST) $(EXE) $(PKG_NAME) $(TEST).dSYM $(EXE).dSYM
+	rm -rf *.o $(TEST) $(EXE) $(PKG_NAME) $(TEST).dSYM $(EXE).dSYM $(TEST_FILE)

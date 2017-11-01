@@ -31,7 +31,7 @@
 #define READER 1
 #define WRITER 2
 /* CONFIGURABLE: Comment or uncomment */
-//#define THREAD_VERBOSE // if defined, it will log when threads start/end
+#define THREAD_VERBOSE // if defined, it will log when threads start/end
 pthread_t start_thread(unsigned type);
 
 /* The locks used by the solution. See functions reader and writer. */

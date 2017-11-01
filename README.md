@@ -1,8 +1,8 @@
-### First Reader-Writer Problem ###
+# First Reader-Writer Problem
 This is a solution to the first reader-writer problem implemented in C with
 using two mutex locks and a reader counter.
 
-## Assumptions and problem definitions ##
+## Assumptions and problem definitions
 * Readers and writers need to access a file concurrently
 * If a writer is writing, then no other writers or readers can access the file
   for reading or writing as that may corrupt the file.
@@ -12,7 +12,7 @@ using two mutex locks and a reader counter.
   regardless of whether a writer is waiting. This results in starvation of
   writers and is part of the definition of the first reader-writer problem.
 
-## A few comments ##
+## A few comments
 * To describe what's going on, I've added print statements to print to stdout.
   I disabled buffering, but sometimes it doesn't work. Mac OS X doesn't respect
   the buffering, but my Ubuntu Linux VM does.
@@ -20,7 +20,7 @@ using two mutex locks and a reader counter.
   important one is at the bottom in main. That's where you can specify which
   test function to call and simulate a scenario.
 
-## Parts of soln.c ##
+## Parts of soln.c
 READER-WRITER DEFINITIONS
 * The declaration of the parts of the solution.
 * start_thread: starts a reader or writer thread
@@ -37,7 +37,7 @@ TEST FUNCTIONS
 MAIN
 * The main function and entry point of the soln executable.
 
-## Usage ##
+## Usage
 make
 ./soln {test_file}
 ** Warning: test_file will likely be overwritten by a writer. **
@@ -45,7 +45,7 @@ make
 * Note: user must have rw access to test_file and it must exist or soln will
   print an error and exit.
 
-## The Solution ##
+## The Solution
 mutex rw
 mutex r
 int rc=0
@@ -66,7 +66,7 @@ reader() {
     unlock(r)
 }
 
-## The Makefile ##
+## The Makefile
 make [all]      : Creates executable, soln
 make test       : Creates debug executable, dsoln
 make pkg        : Creates a tar with files for submission
