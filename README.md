@@ -21,31 +21,37 @@ using two mutex locks and a reader counter.
   test function to call and simulate a scenario.
 
 ## Parts of soln.c
-READER-WRITER DEFINITIONS
+
+### READER-WRITER DEFINITIONS
 * The declaration of the parts of the solution.
 * start_thread: starts a reader or writer thread
 * reader, writer: subroutines called by pthread_create. They synchronize access
   to the file. See read_file and write_file.
 * read_file, write_file: does the actual reading/writing, called by the
   reader/writer subroutines to actually read or write to the file.
-IMPLEMENTATION SECTION
+
+### IMPLEMENTATION SECTION
 * The implementations of the above functions.
 * The explanation of my synchronization implementation is in the reader/writer
   functions.
-TEST FUNCTIONS
+
+### TEST FUNCTIONS
 * Functions to simulate specific scenarios.
-MAIN
+
+### MAIN
 * The main function and entry point of the soln executable.
 
 ## Usage
+```
 make
 ./soln {test_file}
-** Warning: test_file will likely be overwritten by a writer. **
-** Warning: test_file will likely be overwritten by a writer. **
-* Note: user must have rw access to test_file and it must exist or soln will
-  print an error and exit.
+# !!!Warning: test_file will likely be overwritten by a writer!!!
+# Note: user must have rw access to test_file and it must exist or soln will
+#  print an error and exit. A test_file named test_file is created on make.
+```
 
 ## The Solution
+```
 mutex rw
 mutex r
 int rc=0
@@ -65,9 +71,12 @@ reader() {
         unlock(rw)
     unlock(r)
 }
+```
 
 ## The Makefile
+```
 make [all]      : Creates executable, soln
 make test       : Creates debug executable, dsoln
 make pkg        : Creates a tar with files for submission
 make clean      : Cleans
+```
